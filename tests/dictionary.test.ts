@@ -25,7 +25,7 @@ describe("Test WildcardDictionaryImpl", () => {
 
     beforeEach(() => {
         dictionary = new WildcardDictionaryImpl();
-        dictionary.setup(["cat", "car", "bar"]);
+        dictionary.setup(["cat", "car", "bar","dictionary"]);
     });
 
     it("word in dictionary", () => {
@@ -38,6 +38,18 @@ describe("Test WildcardDictionaryImpl", () => {
 
     it("has wildcard word match in dictionary", () => {
         expect(dictionary.isInDict("*at")).toBe(true);
+    });
+
+    it("has wildcard word match in dictionary", () => {
+        expect(dictionary.isInDict("*ry")).toBe(true);
+    });
+
+    it("has wildcard word match in dictionary", () => {
+        expect(dictionary.isInDict("*ion*")).toBe(true);
+    });
+
+    it("has wildcard word match in dictionary", () => {
+        expect(dictionary.isInDict("d*ion*y")).toBe(true);
     });
 
     it("no wildcard word match in dictionary", () => {

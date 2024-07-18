@@ -19,63 +19,81 @@ class DictionaryImpl implements Dictionary {
     }
 }
 
+class TrieNode {
+    public value: string | null;
+    public isEnd: boolean;
+    public children: Map<string, TrieNode>;
+
+    constructor(value: string | null = null) {
+        this.value = value;
+        this.isEnd = false;
+        this.children = new Map<string, TrieNode>();
+    }
+
+    public getOrCreateChild(value: string): TrieNode {
+        let node = this.children.get(value);
+        if (node) {
+            return node;
+        } else {
+            node = new TrieNode(value);
+            this.children.set(value, node);
+            return node;
+        }
+    }
+}
+
 class WildcardDictionaryImpl implements Dictionary {
-    private words: Set<string>;
+    private rootNode: TrieNode;
 
     constructor() {
-        this.words = new Set<string>();
+        this.rootNode = new TrieNode();
     }
 
     setup(input: string[]) {
-        this.words.clear();
+        this.rootNode = new TrieNode();
         for (const word of input) {
-            this.words.add(word);
+            this.addWord(word);
         }
     }
 
     isInDict(word: string): boolean {
-        if (word.includes("*")) {
-            for (const dictWord of this.words.values()) {
-                if (this.isMatch(dictWord, word)) {
-                    return true;
+        return this.search(this.rootNode, word);
+    }
+
+    private addWord(word: string) {
+        let node = this.rootNode;
+        for (const char of word) {
+            node = node.getOrCreateChild(char);
+        }
+        node.isEnd = true;
+    }
+
+    private search(node: TrieNode, word: string): boolean {
+        if (word === "") {
+            return node.isEnd;
+        } else if (word[0] == "*") {
+            const nodesToSearch: Array<TrieNode> = new Array(...node.children.values());
+            while (nodesToSearch.length > 0) {
+                let nextNode = nodesToSearch.pop();
+                if (nextNode) {
+                    if (this.search(nextNode, word.slice(1))){
+                        return true;    
+                    } else {
+                        if (nextNode.children.size > 0) { 
+                            nodesToSearch.push(...nextNode.children.values());
+                        }
+                    }
                 }
             }
             return false;
         } else {
-            return this.words.has(word);
-        }
-    }
-
-    private isMatch(input: string, pattern: string): boolean {
-        let iIdx = 0,
-            pIdx = 0,
-            matchIdx = 0,
-            starIdx = -1;
-
-        while (iIdx < input.length) {
-            if (pIdx < pattern.length && input[iIdx] === pattern[pIdx]) {
-                iIdx++;
-                pIdx++;
-            } else if (pIdx < pattern.length && pattern[pIdx] === "*") {
-                matchIdx = iIdx;
-                starIdx = pIdx;
-                pIdx++;
-            } else if (starIdx != -1) {
-                pIdx = starIdx + 1;
-                matchIdx = matchIdx + 1;
-                iIdx = matchIdx;
+            const nextNode = node.children.get(word[0]);
+            if (nextNode) {
+                return this.search(nextNode, word.slice(1));
             } else {
                 return false;
             }
         }
-
-        while (pIdx < pattern.length) {
-            if (pattern[pIdx] !== "*") {
-                return false;
-            }
-            pIdx++;
-        }
-        return true;
     }
 }
 
